@@ -1,18 +1,46 @@
 
 import glob
-import re
-from subprocess import *
 import sys
-import os
-import random
+import csv
 
-def get_word(files):
-	"""Go through all transcriptions and pull out all tokens of the
-	desired word."""
-	wordlist = []
+corpus_field = "corpus"
+convo_field = "convo"
+word_field = "word"
+word_beg_field = "word.beg"
+word_end_field = "word.end"
+word_dur_field = "word.dur"
+prec_word_field = "prec.word"
+prec_word_beg_field = "prec.word.beg"
+prec_word_end_field = "prec.word.end"
+prec_word_dur_field = "prec.word.dur"
+foll_word_beg_field = "foll.word.beg"
+foll_word_end_field = "foll.word.end"
+foll_word_dur_field = "foll.word.dur"
+line_beg_field = "line.beg"
+line_end_field = "line.end"
+line_dur_field = "line.dur"
+line_transcript_field = "line.transcript"
+words_in_line_field = "words.in.line"
+speaking_rate_field = "speaking.rate"
+speaker_field = "speaker"
+sex_field = "sex"
+yob_field = "yob"
+dialect_field = "dialect"
+educ_field = "educ"
+
+def search(files):
+	"""Search transcripts."""
+	results = []
         for file in files:
                 trans = open(file,'U')
                 for line in trans:
+			line = line.split()
+			for num, word in enumerate(line):
+				if word == target:
+					print line[num-1], word
+
+
+
                         if p.search(line):
                                  splitline = re.split('\s+',line)
                                  cs = splitline[0].split('-')[0][2:7]
