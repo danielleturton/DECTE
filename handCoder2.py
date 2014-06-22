@@ -28,28 +28,20 @@ yob_field = "yob"
 dialect_field = "dialect"
 educ_field = "educ"
 
-def search(files):
-	"""Search transcripts."""
-	results = []
-        for file in files:
-                trans = open(file,'U')
+def search(linebylines):
+	"""Search line-by-line transcripts for target word."""
+	wordlist = []
+        for linebyline in linebylines:
+                trans = open(linebyline,'U')
                 for line in trans:
 			line = line.split()
 			for num, word in enumerate(line):
 				if word == target:
-					print line[num-1], word
-
-
-
-                        if p.search(line):
-                                 splitline = re.split('\s+',line)
-                                 cs = splitline[0].split('-')[0][2:7]
-                                 beg = str(splitline[1])
-                                 end = str(splitline[2])
-				 transline = re.split('\d\d\d\d\d\d',line)[2].split('\n')[0]
-				 wordlist.append(str(word_safe + '_' + cs + ',' + beg + ',' + end + ',' + transline))
+					wordlist.append([line[num-1], word, line[num+1], line[0].split('-')[0][2:7], line[1], line[2], ' '.join(line[3:])])
 		trans.close()
         return wordlist
+
+#From here we can subsequently append things to each item in linebylines, e.g. speaker demographics, word timestamps
 
 def get_pin(wordlist,cinfo):
 	"""For each token, find the PIN of the speaker who uttered it."""
