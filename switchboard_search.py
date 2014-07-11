@@ -32,7 +32,19 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
 			line = line.split()
 			word = line[-1]
 			if target in word:
-				
+				try:
+					foll_line = lines[num+1].split()
+					foll_word, foll_word_beg, foll_word_end = foll_line[3], foll_line[1], foll_line[2]
+					foll_pause = float(line[2]) - float(foll_word_beg)
+					if foll_pause > 0:
+						foll_word = "pause"
+						foll_word_end = foll_word_beg
+						foll_word_beg = line[2]
+						foll_word_dur = foll_pause
+					else:
+						foll_word_dur = float(foll_word_end) - float(foll_word_beg)
+			except IndexError:
+				foll_word, foll_word_beg, foll_word_end, foll_word_dur = "NA", "NA", "NA", "NA"				
 
 			if "'" in target:
 				if target in word:
@@ -57,19 +69,7 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
 				pronouns = frozenset(["i", "you", "he", "she", "it", "we", "they", "which", "who", "what", "how", "why", "where", "when", "that", "this", "there", "everyone", "everything", "everybody", "someone", "something", "somebody", "anyone", "anything", "anybody", "no one", "nothing", "nobody"])
 				if prec_word in pronouns:
 					continue
-			try:
-				foll_line = lines[num+1].split()
-				foll_word, foll_word_beg, foll_word_end = foll_line[3], foll_line[1], foll_line[2]
-				foll_pause = float(line[2]) - float(foll_word_beg)
-				if foll_pause > 0:
-					foll_word = "pause"
-					foll_word_end = foll_word_beg
-					foll_word_beg = line[2]
-					foll_word_dur = foll_pause
-				else:
-					foll_word_dur = float(foll_word_end) - float(foll_word_beg)
-			except IndexError:
-				foll_word, foll_word_beg, foll_word_end, foll_word_dur = "NA", "NA", "NA", "NA"
+
 			p = open(trans.replace('word', 'trans'))
 			linealigned = [x for x in p]
 			p.close()
