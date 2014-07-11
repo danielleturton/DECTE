@@ -116,15 +116,15 @@ def main(wordaligned, pintable, demotable, dictpath, target, outpath, compare, a
 	writer = csv.writer(out)
 	writer.writerow(["corpus", "convo", "word", "word.beg", "word.end", "word.dur", "prec.word", "prec.word.beg", "prec.word.end", "prec.word.dur", "prec.stress", "prec.seg", "foll.word", "foll.word.beg", "foll.word.end", "foll.word.dur", "foll.stress", "foll.seg", "line.beg", "line.end", "line.dur", "line.transcript", "words.in.line", "speaking.rate", "speaker", "sex", "yob", "dialect", "educ"])
 	for item in hits:
-		if item[9] != "[pause]":
-			prec_stress, prec_seg = segment_lookup(item[9], "prec", dict)
+		if item[10] != "[pause]":
+			prec_stress, prec_seg = segment_lookup(item[10], "prec", dict)
 		else:
 			prec_stress, prec_seg = "NA", "NA"
-		if item[13] != "[pause]":
-			foll_stress, foll_seg = segment_lookup(item[13], "foll", dict)
+		if item[14] != "[pause]":
+			foll_stress, foll_seg = segment_lookup(item[14], "foll", dict)
 		else:
 			foll_stress, foll_seg = "NA", "NA"
-		words_in_line = item[17].count(" ") + 1 #note that this is dumb: it counts [laughter], [vocalized-noise], etc. as words
+		words_in_line = item[18].count(" ") + 1 #note that this is dumb: it counts [laughter], [vocalized-noise], etc. as words
 		writer.writerow(["Switchboard", item[5], item[6], item[7], item[8], item[9], item[10], item[11], item[12], item[13], prec_stress, prec_seg, item[14], item[15], item[16], item[17], foll_stress, foll_seg, item[19], item[20], float(item[20]) - float(item[19]), item[18], words_in_line, words_in_line/(float(item[20]) - float(item[19])), item[0], item[1], item[3], item[2], item[4]])
 	out.close()
 
