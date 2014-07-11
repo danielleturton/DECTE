@@ -1,3 +1,5 @@
+#!!! check list of pronouns for case before running this on Fisher
+
 #wordaligned = "/Volumes/LEL_corpora/PDE/Switchboard/swb_ms98_transcriptions/20/2007/*-word.text"
 #wordaligned = "/Volumes/LEL_corpora/PDE/Switchboard/swb_ms98_transcriptions/*/*/*-word.text"
 #pintable = "/Volumes/LEL_corpora/PDE/Switchboard/info/call_con_tab.csv"
@@ -31,8 +33,8 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
                 for num, line in enumerate(lines):
 			line = line.split()
 			word = line[-1]
-			if target in word:
-				try:
+			if target in word: #when you find a match
+				try: #get following word (if present) and its info
 					foll_line = lines[num+1].split()
 					foll_word, foll_word_beg, foll_word_end = foll_line[3], foll_line[1], foll_line[2]
 					foll_pause = float(line[2]) - float(foll_word_beg)
@@ -43,15 +45,15 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
 						foll_word_dur = foll_pause
 					else:
 						foll_word_dur = float(foll_word_end) - float(foll_word_beg)
-			except IndexError:
-				foll_word, foll_word_beg, foll_word_end, foll_word_dur = "NA", "NA", "NA", "NA"				
-
-			if "'" in target:
-				if target in word:
+				except IndexError:
+					foll_word, foll_word_beg, foll_word_end, foll_word_dur = "NA", "NA", "NA", "NA"
+				if "'" in target: #word timestamp info is NA; get prec_word and its info
+					word_beg, word_end, word_dur = "NA", "NA", "NA"
 					prec_word, prec_word_beg, prec_word_end = line[-1].split("'")[0], line[1], line[2]
-					prec_word_dur = float(prec_word_end) - float(prec_word_beg)			
-			else:
-				if word == target:
+					prec_word_dur = float(prec_word_end) - float(prec_word_beg)
+				else: #get word and its info; get prec_word and its info
+					word_beg, word_end = line[1], line[2]
+					word_dur = float(line[2]) - float(line[1])
 					try:
 						prec_line = lines[num-1].split()
 						prec_word, prec_word_beg, prec_word_end = prec_line[3], prec_line[1], prec_line[2]
@@ -65,27 +67,23 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
 							prec_word_dur = float(prec_word_end) - float(prec_word_beg)
 					except IndexError:
 						prec_word, prec_word_beg, prec_word_end, prec_word_dur = "NA", "NA", "NA", "NA"
-			if args.avoid == "pronouns": #check these for case before running this on Fisher
-				pronouns = frozenset(["i", "you", "he", "she", "it", "we", "they", "which", "who", "what", "how", "why", "where", "when", "that", "this", "there", "everyone", "everything", "everybody", "someone", "something", "somebody", "anyone", "anything", "anybody", "no one", "nothing", "nobody"])
-				if prec_word in pronouns:
-					continue
-
-			p = open(trans.replace('word', 'trans'))
-			linealigned = [x for x in p]
-			p.close()
-			for l in linealigned:
-				if float(l.split()[1]) <= float(line[1]) and float(line[2]) <= float(l.split()[2]):
-					if args.compare:
-						c = csv.DictReader(open(args.compare, 'rUb'))
-						coded = []
-						for item in c:
-							coded.append(item["line.transcript"])
-						if ' '.join(re.split('\s+', l.strip())[3:]) in coded:
-							continue						
-					if "'" in target:
-						hits.append([PIN, sex, dialect, yob, educ, convo + side, word, "NA", "NA", "NA", prec_word, prec_word_beg, prec_word_end, prec_word_dur, foll_word, foll_word_beg, foll_word_end, foll_word_dur, ' '.join(re.split('\s+', l.strip())[3:]), re.split('\s+', l.strip())[1], re.split('\s+', l.strip())[2]])
-					else:
-						hits.append([PIN, sex, dialect, yob, educ, convo + side, word, line[1], line[2], float(line[2]) - float(line[1]), prec_word, prec_word_beg, prec_word_end, prec_word_dur, foll_word, foll_word_beg, foll_word_end, foll_word_dur, ' '.join(re.split('\s+', l.strip())[3:]), re.split('\s+', l.strip())[1], re.split('\s+', l.strip())[2]])
+				if args.avoid == "pronouns": #discard if preceding word is a stop word
+					pronouns = frozenset(["i", "you", "he", "she", "it", "we", "they", "which", "who", "what", "how", "why", "where", "when", "that", "this", "there", "everyone", "everything", "everybody", "someone", "something", "somebody", "anyone", "anything", "anybody", "no one", "nothing", "nobody"])
+					if prec_word in pronouns:
+						continue
+				p = open(trans.replace('word', 'trans'))
+				linealigned = [x for x in p]
+				p.close()
+				for l in linealigned: #find annotation unit containing token
+					if float(l.split()[1]) <= float(line[1]) and float(line[2]) <= float(l.split()[2]):
+						if args.compare: #discard if token has already been coded
+							c = csv.DictReader(open(args.compare, 'rUb'))
+							coded = []
+							for item in c:
+								coded.append(item["line.transcript"])
+							if ' '.join(re.split('\s+', l.strip())[3:]) in coded:
+								continue						
+						hits.append([PIN, sex, dialect, yob, educ, convo + side, word, word_beg, word_end, word_dur, prec_word, prec_word_beg, prec_word_end, prec_word_dur, foll_word, foll_word_beg, foll_word_end, foll_word_dur, ' '.join(re.split('\s+', l.strip())[3:]), re.split('\s+', l.strip())[1], re.split('\s+', l.strip())[2]])
 		o.close()
         return hits
 
