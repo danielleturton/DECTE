@@ -30,7 +30,7 @@ def make_increment(subset):
     return new_beg, increment
 
 def advance_subset(subset, new_beg, increment):
-    """Advance the timestamps withina 20-second time chunk by the increment so they fill the time chunk"""
+    """Advance the timestamps within a 20-second time chunk by the increment so they fill the time chunk"""
     advanced_subset = []
     if len(subset) > 0:
         for item in subset:
