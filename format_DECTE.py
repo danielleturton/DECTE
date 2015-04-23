@@ -1,7 +1,5 @@
 # usage = python format_DECTE.py infile outfile
 ## This will need to be changed to take a folder of XML files
-# infile = '/Users/laurelmackenzie/Downloads/decten1tlsg20.xml'
-# outfile = '/Users/laurelmackenzie/Downloads/decten1tlsg20_formatted.txt'
 
 import xml.etree.ElementTree as ET
 import argparse
