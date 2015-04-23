@@ -1,12 +1,18 @@
-#!!! check list of pronouns for case before running this on Fisher
+"""
+Search Switchboard for a word, optionally preceded by a word (or set of words) and optionally *not* preceded by a word (or set of words). Outputs a coding file of tokens and variables useful for coding contractions (namely, data on preceding & following words and speaking rate).
+
+Usage: switchboard_search.py wordaligned_path pintable demotable dictpath search_string outpath --compare --avoid --target
+"""
 
 #wordaligned = "/Volumes/LEL_corpora/PDE/Switchboard/swb_ms98_transcriptions/20/2007/*-word.text"
 #wordaligned = "/Volumes/LEL_corpora/PDE/Switchboard/swb_ms98_transcriptions/*/*/*-word.text"
 #pintable = "/Volumes/LEL_corpora/PDE/Switchboard/info/call_con_tab.csv"
 #demotable = "/Volumes/LEL_corpora/PDE/Switchboard/info/caller_tab.csv"
 #dictpath = '/Users/laurelmackenzie/Documents/Corpora/cmudict.0.7a.txt'
-#target = "he"
+#search_string = "he"
 #outpath = "test.csv"
+
+pronouns = frozenset(["i", "I", "you", "he", "she", "it", "we", "they", "which", "who", "what", "how", "why", "where", "when", "that", "this", "there", "everyone", "everything", "everybody", "someone", "something", "somebody", "anyone", "anything", "anybody", "no one", "nothing", "nobody", "here"])
 
 import glob
 import sys
@@ -14,11 +20,13 @@ import csv
 import re
 import argparse
 
-def search(wordaligned, pintable, demotable, target, compare, avoid):
-	"""Search word-aligned transcripts for target word; return various social & linguistic factors."""
+def search(wordaligned, pintable, demotable, search_string, compare, avoid, target):
+	"""Search word-aligned transcripts for search string; return various social & linguistic factors."""
 	hits = []
-	pins = csv.DictReader(open(pintable), fieldnames = ["convo", "side", "PIN", "", "", "", "", ""])
-	demo = csv.DictReader(open(demotable), fieldnames = ["PIN", "", "", "sex", "yob", "dialect", "educ"])
+	p = csv.DictReader(open(pintable), fieldnames = ["convo", "side", "PIN", "", "", "", "", ""])
+	pins = [line for line in p]
+	d = csv.DictReader(open(demotable), fieldnames = ["PIN", "", "", "sex", "yob", "dialect", "educ"])
+	demo = [line for line in d]
         for trans in wordaligned:
                 o = open(trans,'U')
 		convo = trans.split('/')[-1].split('-')[0][2:6]
@@ -33,7 +41,15 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
                 for num, line in enumerate(lines):
 			line = line.split()
 			word = line[-1]
-			if target in word: #when you find a match
+			match = None
+			if "'" in search_string:
+				if search_string in word:
+					match = "yes"
+			else:
+				if word == search_string:
+					match = "yes"
+			if match: #when you find a match
+				
 				try: #get following word (if present) and its info
 					foll_line = lines[num+1].split()
 					foll_word, foll_word_beg, foll_word_end = foll_line[3], foll_line[1], foll_line[2]
@@ -47,7 +63,7 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
 						foll_word_dur = float(foll_word_end) - float(foll_word_beg)
 				except IndexError:
 					foll_word, foll_word_beg, foll_word_end, foll_word_dur = "NA", "NA", "NA", "NA"
-				if "'" in target: #word timestamp info is NA; get prec_word and its info
+				if "'" in search_string: #word timestamp info is NA; get prec_word and its info
 					word_beg, word_end, word_dur = "NA", "NA", "NA"
 					prec_word, prec_word_beg, prec_word_end = line[-1].split("'")[0], line[1], line[2]
 					prec_word_dur = float(prec_word_end) - float(prec_word_beg)
@@ -67,9 +83,14 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
 							prec_word_dur = float(prec_word_end) - float(prec_word_beg)
 					except IndexError:
 						prec_word, prec_word_beg, prec_word_end, prec_word_dur = "NA", "NA", "NA", "NA"
-				if args.avoid == "pronouns": #discard if preceding word is a stop word
-					pronouns = frozenset(["i", "you", "he", "she", "it", "we", "they", "which", "who", "what", "how", "why", "where", "when", "that", "this", "there", "everyone", "everything", "everybody", "someone", "something", "somebody", "anyone", "anything", "anybody", "no one", "nothing", "nobody"])
+				if target:
+					if prec_word != target:
+						continue
+				if avoid == "pronouns": #discard if preceding word is a stop word
 					if prec_word in pronouns:
+						continue
+				elif avoid:
+					if prec_word == avoid:
 						continue
 				p = open(trans.replace('word', 'trans'))
 				linealigned = [x for x in p]
@@ -88,7 +109,7 @@ def search(wordaligned, pintable, demotable, target, compare, avoid):
         return hits
 
 def segment_lookup(word, position, dict):
-    """Open CMUdict, look up word, return relevant fields. If a word can't be found, return 'unknown'. When a line has multiple entries, this will take the first one. Not a perfect solution in cases of variation or homonymy (e.g. REcord/reCORD) but I don't know how else to do it."""
+    """Open CMUdict, look up word, return relevant fields. If a word can't be found, return 'unknown'. When a word has multiple dictionary entries, this will take the first one. Not a perfect solution in cases of variation or homonymy (e.g. REcord/reCORD) but I don't know how else to do it."""
     seg, stress = "unknown",  "unknown"
     for line in dict:
         item = line[0]
@@ -105,9 +126,9 @@ def segment_lookup(word, position, dict):
     return (stress, seg)
 
 
-def main(wordaligned, pintable, demotable, dictpath, target, outpath, compare, avoid):
+def main(wordaligned, pintable, demotable, dictpath, search_string, outpath, compare, avoid, target):
 
-	hits = search(glob.glob(wordaligned), pintable, demotable, target, compare, avoid)
+	hits = search(glob.glob(wordaligned), pintable, demotable, search_string, compare, avoid, target)
 
 	d = open(dictpath, 'rUb')
 	dict = [re.split("\s{2}", line) for line in d.readlines() if ";" not in line]
@@ -135,13 +156,13 @@ if __name__ == "__main__":
 	parser.add_argument("pintable", help = "path to table of pins")
 	parser.add_argument("demotable", help = "path to table of demographic info")
 	parser.add_argument("dictpath", help = "path to CMU dictionary")
-	parser.add_argument("target", help = "word to search for")
+	parser.add_argument("search_string", help = "word to search for")
 	parser.add_argument("outpath", help = "path to output file")
 	parser.add_argument("-c", "--compare", help = "compare to file of existing coded tokens?")
-	parser.add_argument("-a", "--avoid", help = "avoid a particular set of preceding words?")
+	parser.add_argument("-a", "--avoid", help = "avoid a particular word or set of preceding words?")
+	parser.add_argument("-t", "--target", help = "target a particular word or set of preceding words?")
 	args = parser.parse_args()
-	main(args.wordaligned, args.pintable, args.demotable, args.dictpath, args.target, args.outpath, args.compare, args.avoid)
-	#        main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+	main(args.wordaligned, args.pintable, args.demotable, args.dictpath, args.search_string, args.outpath, args.compare, args.avoid, args.target)
     except IndexError:
-        print >> sys.stderr, "Usage: switchboard_search.py wordaligned_path pintable demotable dictpath target_word outpath"
+        print >> sys.stderr, "Usage: switchboard_search.py wordaligned_path pintable demotable dictpath search_string outpath"
         sys.exit(1)
